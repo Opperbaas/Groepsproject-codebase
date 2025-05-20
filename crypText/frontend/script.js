@@ -629,6 +629,43 @@
         }
 
         // Event Listeners
+        socket.on('new_message', (data) => {
+            addMessageToChat(data.content, false);
+        });
+
+        socket.on('message_sent', (data) => {
+            addMessageToChat(data.content, true);
+            console.log('Message sent succesfully', data);   // true omdat dit een verzonden bericht is
+        });
+
+        socket.on('message_error', (data) => {
+            console.error('Message error:', data.error);
+            alert('Error sending message: ' + data.error);
+        });
+
+        // Listen for online/offline status
+        socket.on('user_online', (data) => {
+            // Update UI to show user is online
+            const userElement = document.querySelector(`[data-user-id="${data.userId}"]`);
+            if (userElement) {
+                userElement.classList.add('online');
+            }
+        });
+
+        socket.on('user_offline', (data) => {
+            // Update UI to show user is offline
+            const userElement = document.querySelector(`[data-user-id="${data.userId}"]`);
+            if (userElement) {
+                userElement.classList.remove('online');
+            }
+        });
+
+        socket.on('connect', () => {
+            console.log('Connected to WebSocket server');
+            connectionStatus.textContent = 'Connected';
+            connectionStatus.style.color = 'green';
+        });
+
         createAccountBtn.addEventListener('click', () => {
             const userId = generateUniqueId();
             const recoveryPhrase = generateRecoveryPhrase();
