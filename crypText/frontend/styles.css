@@ -109,7 +109,6 @@ header {
 .welcome-screen h2 {
     font-size: 2rem;
     margin-bottom: 20px;
-    color: var(--dark-color);
 }
 
 .welcome-screen p {
@@ -201,6 +200,7 @@ header {
     border-bottom: 1px solid #eee;
     cursor: pointer;
     transition: background 0.3s;
+    position: relative;
 }
 
 .contact:hover {
@@ -231,6 +231,24 @@ header {
     border-radius: 50%; /* Make the picture circular */
     margin-right: 10px; /* Add spacing between the picture and text */
     vertical-align: middle; /* Align the picture with the text */
+}
+
+.contact-menu-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: none;
+    border: none;
+    font-size: 1.3em;
+    color: #888;
+    cursor: pointer;
+    padding: 0 4px;
+    z-index: 2;
+    transition: color 0.2s;
+}
+
+.contact-menu-btn:hover {
+    color: #212223;
 }
 
 .chat-box {
@@ -337,6 +355,7 @@ header {
     outline: none;
     transition: all 0.3s ease;
     background-color: #f5f5f5; /* Optional: Light background for contrast */
+    margin-bottom: 12px;
 }
 
 #search-contacts:focus {
@@ -371,7 +390,7 @@ header {
 
 /* Utility classes */
 .hidden {
-    display: none;
+    display: none !important;
 }
 
 .alert {
@@ -418,76 +437,220 @@ footer {
 
 /* Dark Mode Styles */
 .dark-mode {
-    background-color: #212223; /* Dark mode background color */
-    color: #e0e0e0; /* Default light gray text for dark mode */
+    background-color: #18191a;
+    color: #e4e6eb;
 }
 
 .dark-mode header,
-.dark-mode .card,
-.dark-mode .btn {
-    background-color: #2a2a2a; /* Slightly lighter dark background for elements */
-    color: #e0e0e0; /* Light gray text */
+.dark-mode footer {
+    background-color: #242526;
+    color: #e4e6eb;
 }
 
-.dark-mode .btn:hover {
-    background-color: #3a3a3a; /* Slightly lighter shade for hover effect */
+.dark-mode .container {
+    background: none;
 }
 
 .dark-mode .card {
-    background: #2a2a2a; /* Match dark mode background */
-    border: 1px solid #444; /* Subtle border for separation */
+    background: #242526;
+    color: #e4e6eb;
+    border: 1px solid #393a3b;
 }
 
-.dark-mode .alert-success {
-    background: #155724; /* Keep success alert readable */
-    color: #e0e0e0; /* Light gray text */
+.dark-mode .btn,
+.dark-mode #logout-btn,
+.dark-mode .btn-block {
+    background: #3a3b3c;
+    color: #e4e6eb;
+    border: none;
 }
 
-.dark-mode .alert-danger {
-    background: #721c24; /* Keep danger alert readable */
-    color: #e0e0e0; /* Light gray text */
+.dark-mode .btn:hover,
+.dark-mode #logout-btn:hover {
+    background: #4e4f50;
+    color: #fff;
 }
 
-/* Keep contact names and previews unchanged */
+.dark-mode .settings-bar {
+    background-color: #242526;
+    border-left: 1px solid #393a3b;
+}
+
+.dark-mode #dark-mode-toggle {
+    background: #3a3b3c;
+    color: #e4e6eb;
+}
+
+.dark-mode #dark-mode-toggle:hover {
+    background: #4e4f50;
+}
+
+.dark-mode #close-settings-btn {
+    color: #e4e6eb;
+}
+
+.dark-mode .close-btn-wrapper {
+    background: none;
+}
+
+.dark-mode .contact-list {
+    background: #242526;
+    border: none;
+    box-shadow: none;
+}
+
+.dark-mode .contact {
+    background: transparent;
+    border-bottom: 1px solid #393a3b;
+    color: #e4e6eb;
+}
+
+.dark-mode .contact.active-contact {
+    background: #393a3b;
+    border-left: 3px solid #e4e6eb;
+}
+
 .dark-mode .contact-name,
 .dark-mode .contact-preview {
-    color: #333; /* Original color for contact names and previews */
+    color: #e4e6eb;
 }
 
-/* Keep text in the chat box (e.g., name, user ID, and static text) unchanged */
-.dark-mode .chat-header p,
-.dark-mode #chat-user-id,
-.dark-mode #chat-display-name,
+.dark-mode .chat-box {
+    background: #18191a;
+    color: #e4e6eb;
+    border: none;
+    box-shadow: none;
+}
+
+.dark-mode .chat-header,
 .dark-mode .chat-subtitle {
-    color: #212223; /* Original color for static text */
+    background: none;
+    color: #e4e6eb;
+    border-bottom: 1px solid #393a3b;
 }
 
-/* Messages in the chat box */
+.dark-mode .profile-box {
+    background: #242526;
+    border: 1px solid #393a3b;
+    color: #e4e6eb;
+}
+
+.dark-mode .profile-picture,
+.dark-mode .contact-picture {
+    border: 2px solid #393a3b;
+}
+
 .dark-mode .chat-messages {
-    background-color: #1e1e1e; /* Slightly darker background for messages */
+    background: #18191a;
 }
 
 .dark-mode .message.received {
-    background: #2e2e2e; /* Darker background for received messages */
-    color: #e0e0e0; /* Light gray text for received messages */
+    background: #242526;
+    color: #e4e6eb;
 }
 
 .dark-mode .message.sent {
-    background: #3a3a3a; /* Darker background for sent messages */
-    color: #e0e0e0; /* Light gray text for sent messages */
+    background: #3a3b3c;
+    color: #e4e6eb;
 }
 
-/* Input fields in dark mode */
+.dark-mode .message-time {
+    color: #b0b3b8;
+}
+
+.dark-mode .chat-input {
+    border-top: 1px solid #393a3b;
+}
+
+.dark-mode .chat-input input {
+    background: #242526;
+    color: #e4e6eb;
+    border: 1px solid #393a3b;
+}
+
+.dark-mode .chat-input input::placeholder {
+    color: #b0b3b8;
+}
+
+.dark-mode .emoji-picker {
+    background: #242526;
+    border: 1px solid #393a3b;
+    color: #e4e6eb;
+}
+
+.dark-mode .emoji-picker span {
+    color: #e4e6eb;
+}
+
+.dark-mode .recovery-phrase,
+.dark-mode .phrase-word {
+    background: #242526;
+    color: #e4e6eb;
+    border: 1px solid #393a3b;
+}
+
+.dark-mode .form-control,
 .dark-mode input,
 .dark-mode textarea {
-    background-color: #2a2a2a; /* Dark background for input fields */
-    color: #e0e0e0; /* Light gray text */
-    border: 1px solid #444; /* Subtle border for input fields */
+    background: #242526;
+    color: #e4e6eb;
+    border: 1px solid #393a3b;
 }
 
+.dark-mode .form-control::placeholder,
 .dark-mode input::placeholder,
 .dark-mode textarea::placeholder {
-    color: #888; /* Subtle placeholder text color */
+    color: #b0b3b8;
+}
+
+.dark-mode .alert-success {
+    background: #234d20;
+    color: #e4e6eb;
+    border: 1px solid #155724;
+}
+
+.dark-mode .alert-danger {
+    background: #5a1a1a;
+    color: #e4e6eb;
+    border: 1px solid #721c24;
+}
+
+.dark-mode .about-bar {
+    background: #242526;
+    color: #e4e6eb;
+    border-top: 1px solid #393a3b;
+}
+
+.dark-mode .about-link {
+    color: #e4e6eb;
+}
+
+.dark-mode .about-link:hover {
+    color: #4e8cff;
+}
+
+.dark-mode .dot-separator {
+    color: #b0b3b8;
+}
+
+.dark-mode .back-button {
+    color: #e4e6eb;
+    background: #242526;
+    border: 1px solid #393a3b;
+}
+
+.dark-mode .back-button:hover {
+    background: #3a3b3c;
+    color: #fff;
+}
+
+.dark-mode #chat-user-id {
+    color: #e4e6eb;
+}
+
+.dark-mode #search-contacts {
+    color: #000 !important;
+    background-color: #f5f5f5 !important;
 }
 
 /* Dark Mode Toggle */
@@ -514,17 +677,41 @@ footer {
 
 /* Top Controls */
 #top-controls {
+    display: none;
+    width: 100%;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    margin-top: 20px;
+    gap: 0;
+}
+
+#chat-screen.active ~ #top-controls,
+#top-controls:has(+ #chat-screen.active) {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    margin-top: 20px; /* Adjust the distance from the top */
-    gap: 15px; /* Space between the search bar and the toggle button */
+    margin-top: 20px;
+    gap: 15px;
 }
 
 #search-bar {
     width: 100%;
     max-width: 400px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+}
+
+.search-buttons {
+    display: flex;
+    flex-direction: row;
+    gap: 12px;
+    justify-content: center;
+    width: 100%;
 }
 
 .profile-box {
@@ -545,17 +732,20 @@ footer {
     z-index: 1000;
 }
 
-.settings-icon {
-    background: none;
-    border: none;
-    font-size: 1.5rem;
-    cursor: pointer;
-    color: var(--primary-color);
-    transition: transform 0.2s ease;
-}
-
 .settings-icon:hover {
     transform: scale(1.1);
+}
+
+/* Remove background from the top right settings button */
+.settings-icon {
+    background: none !important;
+    border: none;
+    color: var(--primary-color);
+    font-size: 1.5em;
+    cursor: pointer;
+    transition: transform 0.2s;
+    padding: 0;
+    box-shadow: none;
 }
 
 /* Settings Bar */
@@ -603,9 +793,8 @@ footer {
     font-size: 1.5rem;
     color: var(--primary-color);
     cursor: pointer;
-    align-self: flex-end; /* Align the "X" to the top-right of the settings bar */
-    margin-top: -10px;
-    margin-right: -10px;
+    align-self: unset; /* Remove previous alignment */
+    margin: 0;         /* Remove previous margin */
     transition: transform 0.2s ease;
 }
 
@@ -709,4 +898,51 @@ footer {
 #logout-btn:hover {
     background: #7c7c7c; /* Hover background color */
     color: #fff; /* Keep text white on hover */
+}
+
+/* Emoji Picker */
+.emoji-picker {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    max-height: 200px;
+    overflow-y: auto;
+    background: #f9f9f9;
+    border: 1px solid #ccc;
+    padding: 10px;
+    position: absolute;
+    width: 300px;
+    z-index: 1000;
+    border-radius: 5px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    transform: translateY(610px); /* Position closer to the button */
+}
+
+.emoji-picker.hidden {
+    display: none;
+}
+
+.emoji-picker span {
+    cursor: pointer;
+    font-size: 20px;
+}
+
+/* Copy Recovery Phrase Button */
+#copy-recovery-phrase-btn {
+    margin-top: 20px; /* Add spacing above the button */
+}
+
+/* Close Button Wrapper */
+.close-btn-wrapper {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+}
+
+#add-user-modal.hidden {
+    display: none !important;
+}
+
+#delete-account-btn {
+    display: none;
 }
