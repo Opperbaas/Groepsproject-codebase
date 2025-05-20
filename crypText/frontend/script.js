@@ -221,11 +221,12 @@
         const completeSetupBtn = document.getElementById('complete-setup-btn');
         const phraseConfirmedCheckbox = document.getElementById('phrase-confirmed');
         const recoverBtn = document.getElementById('recover-btn');
-        const backToWelcomeBtn = document.getElementById('back-to-welcome');
         const logoutBtn = document.getElementById('logout-btn');
         const sendBtn = document.getElementById('send-btn');
         const emojiBtn = document.getElementById('emoji-btn');
         const profilePicInput = document.getElementById('profile-pic');
+        const fileBtn = document.getElementById('file-btn');
+        const fileInput = document.getElementById('file-input');
 
         // Other elements
         const userIdDisplay = document.getElementById('user-id');
@@ -239,41 +240,6 @@
         const chatMessages = document.getElementById('chat-messages');
         const contactElements = document.querySelectorAll('.contact');
         const currentChatName = document.getElementById('current-chat-name');
-        const socket = io('http://localhost:5000', {
-            reconnection: true,
-            reconnectionAttempts: 5,
-            reconnectionDelay: 1000,
-            transports: ['websocket', 'polling'],
-            cors: {
-                origin: "http://localhost:8080",
-                methods: ['GET', 'POST'],
-                credentials: true
-            }
-        });
-        const connectionStatus = document.getElementById('connection-status');
-
-        // Socket connection status
-        socket.on('connect', () => {
-            connectionStatus.textContent = 'Connected';
-            connectionStatus.style.color = 'green';
-        });
-        socket.on('disconnect', () => {
-            connectionStatus.textContent = 'Disconnected';
-            connectionStatus.style.color = 'red';
-        });
-        socket.on('connect_error', () => {
-            connectionStatus.textContent = 'Connection Error';
-            connectionStatus.style.color = 'red';
-        });
-        socket.on('connect_timeout', () => {
-            connectionStatus.textContent = 'Connection Timeout';
-            connectionStatus.style.color = 'red';
-        });
-        socket.on('reconnect', (attempt) => {
-            connectionStatus.textContent = `Reconnected after ${attempt} attempts`;
-            connectionStatus.style.color = 'green';
-        });
-
 
         // State
         let currentUser = {
@@ -282,6 +248,8 @@
             recoveryPhrase: [],
             contacts: {}
         };
+
+        let groups = []; // Each group: { id, name, memberIds: [], messages: [] }
 
         // Initialize emoji button
         const emojiButton = new EmojiButton({
@@ -629,43 +597,6 @@
         }
 
         // Event Listeners
-        socket.on('new_message', (data) => {
-            addMessageToChat(data.content, false);
-        });
-
-        socket.on('message_sent', (data) => {
-            addMessageToChat(data.content, true);
-            console.log('Message sent succesfully', data);   // true omdat dit een verzonden bericht is
-        });
-
-        socket.on('message_error', (data) => {
-            console.error('Message error:', data.error);
-            alert('Error sending message: ' + data.error);
-        });
-
-        // Listen for online/offline status
-        socket.on('user_online', (data) => {
-            // Update UI to show user is online
-            const userElement = document.querySelector(`[data-user-id="${data.userId}"]`);
-            if (userElement) {
-                userElement.classList.add('online');
-            }
-        });
-
-        socket.on('user_offline', (data) => {
-            // Update UI to show user is offline
-            const userElement = document.querySelector(`[data-user-id="${data.userId}"]`);
-            if (userElement) {
-                userElement.classList.remove('online');
-            }
-        });
-
-        socket.on('connect', () => {
-            console.log('Connected to WebSocket server');
-            connectionStatus.textContent = 'Connected';
-            connectionStatus.style.color = 'green';
-        });
-
         createAccountBtn.addEventListener('click', () => {
             const userId = generateUniqueId();
             const recoveryPhrase = generateRecoveryPhrase();
@@ -728,7 +659,10 @@
             }
         });
 
-        backToWelcomeBtn.addEventListener('click', () => {
+        document.getElementById('back-to-welcome-setup')?.addEventListener('click', function() {
+            showScreen('welcome');
+        });
+        document.getElementById('back-to-welcome-recovery')?.addEventListener('click', function() {
             showScreen('welcome');
         });
 
@@ -1169,4 +1103,75 @@
                     document.removeEventListener('mousedown', handleOutsideClick);
                 }
             };
+        }
+
+        if (fileBtn && fileInput) {
+            fileBtn.addEventListener('click', () => {
+                fileInput.click();
+            });
+
+            fileInput.addEventListener('change', function () {
+                const file = this.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    if (file.type.startsWith('image/')) {
+                        addMediaToChat('image', e.target.result, file.name, true);
+                    } else if (file.type.startsWith('video/')) {
+                        addMediaToChat('video', e.target.result, file.name, true);
+                    } else {
+                        addMediaToChat('file', e.target.result, file.name, true, file.type);
+                    }
+                };
+                // For non-image/video files, use readAsDataURL for download links
+                reader.readAsDataURL(file);
+                this.value = '';
+            });
+        }
+
+        function addMediaToChat(type, src, name, isSent = true, mimeType = '') {
+            const chatMessages = document.getElementById('chat-messages');
+            const messageElement = document.createElement('div');
+            messageElement.className = `message ${isSent ? 'sent' : 'received'}`;
+            let media;
+            if (type === 'image') {
+                media = document.createElement('img');
+                media.src = src;
+                media.alt = name;
+                media.style.maxWidth = "180px";
+                media.style.maxHeight = "180px";
+                media.style.display = "block";
+                media.style.borderRadius = "10px";
+                media.style.margin = "5px 0";
+                messageElement.appendChild(media);
+            } else if (type === 'video') {
+                media = document.createElement('video');
+                media.src = src;
+                media.controls = true;
+                media.style.maxWidth = "220px";
+                media.style.maxHeight = "180px";
+                media.style.display = "block";
+                media.style.borderRadius = "10px";
+                media.style.margin = "5px 0";
+                messageElement.appendChild(media);
+            } else if (type === 'file') {
+                media = document.createElement('a');
+                media.href = src;
+                media.download = name;
+                media.target = "_blank";
+                media.textContent = `📄 ${name}`;
+                media.style.display = "inline-block";
+                media.style.wordBreak = "break-all";
+                media.style.margin = "5px 0";
+                messageElement.appendChild(media);
+            }
+
+            const timeElement = document.createElement('div');
+            timeElement.className = 'message-time';
+            const now = new Date();
+            timeElement.textContent = `${now.getHours()}:${now.getMinutes().toString().padStart(2, '0')}`;
+            messageElement.appendChild(timeElement);
+
+            chatMessages.appendChild(messageElement);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
         }
