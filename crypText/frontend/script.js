@@ -1,4 +1,4 @@
- // BIP39 word list (abbreviated version for demo purposes)
+// BIP39 word list (abbreviated version for demo purposes)
      const wordList = [
     "abandon", "ability", "able", "about", "above", "absent", "absorb", "abstract", "absurd", "abuse",
     "access", "accident", "account", "accuse", "achieve", "acid", "acoustic", "acquire", "across", "act",
@@ -33,7 +33,7 @@
     "cereal", "certain", "chair", "chalk", "champion", "change", "chaos", "chapter", "charge", "chase",
     "chat", "cheap", "check", "cheese", "chef", "cherry", "chest", "chicken", "chief", "child",
     "chimney", "choice", "choose", "chronic", "chuckle", "chunk", "churn", "cigar", "cinnamon", "circle",
-    "citizen", "city", "civil", "claim", "clap", "clarify", "claw", "clay", "clean", "clerk",
+    "citizen", "city", "civil", "claim", "clap", "clarify", "claw", "clay", "clean", "clerk",,
     "clever", "click", "client", "cliff", "climb", "clinic", "clip", "clock", "clog", "close",
     "cloth", "cloud", "clown", "club", "clump", "cluster", "clutch", "coach", "coast", "coconut",
     "code", "coffee", "coil", "coin", "collect", "color", "column", "combine", "come", "comfort",
@@ -239,39 +239,6 @@
         const chatMessages = document.getElementById('chat-messages');
         const contactElements = document.querySelectorAll('.contact');
         const currentChatName = document.getElementById('current-chat-name');
-        const socket = io('http://localhost:5000', {
-            reconnection: true,
-            reconnectionAttempts: 5,
-            reconnectionDelay: 1000,
-            transports: ['websocket', 'polling'],
-            cors: {
-                origin: "http://localhost:8080",
-                methods: ['GET', 'POST'],
-                credentials: true
-            }
-        });
-        const connectionStatus = document.getElementById('connection-status');
-
-        socket.on('connect', () => {
-            connectionStatus.textContent = 'Connected';
-            connectionStatus.style.color = 'green';
-        });
-        socket.on('disconnect', () => {
-            connectionStatus.textContent = 'Disconnected';
-            connectionStatus.style.color = 'red';
-        });
-        socket.on('connect_error', () => {
-            connectionStatus.textContent = 'Connection Error';
-            connectionStatus.style.color = 'red';
-        });
-        socket.on('connect_timeout', () => {
-            connectionStatus.textContent = 'Connection Timeout';
-            connectionStatus.style.color = 'red';
-        });
-        socket.on('reconnect', (attempt) => {
-            connectionStatus.textContent = `Reconnected after ${attempt} attempts`;
-            connectionStatus.style.color = 'green';
-        });
 
         // State
         let currentUser = {
@@ -303,6 +270,13 @@
                 screen.classList.remove('active');
             });
             screens[screenId].classList.add('active');
+            // Show top-controls only on chat screen
+            document.getElementById('top-controls').style.display = (screenId === 'chat') ? 'flex' : 'none';
+            // Show delete button only on chat screen (logged in)
+            const deleteBtn = document.getElementById('delete-account-btn');
+            if (deleteBtn) {
+                deleteBtn.style.display = (screenId === 'chat') ? 'block' : 'none';
+            }
         }
 
         function generateUniqueId() {
@@ -341,24 +315,11 @@
                 input.type = 'text';
                 input.id = `recovery-word-${i + 1}`;
                 input.className = 'form-control';
-                input.setAttribute('list', 'word-suggestions');
                 
                 wordInputDiv.appendChild(label);
                 wordInputDiv.appendChild(input);
                 recoveryInputContainer.appendChild(wordInputDiv);
             }
-            
-            // Add datalist for word suggestions
-            const datalist = document.createElement('datalist');
-            datalist.id = 'word-suggestions';
-            
-            wordList.forEach(word => {
-                const option = document.createElement('option');
-                option.value = word;
-                datalist.appendChild(option);
-            });
-            
-            document.body.appendChild(datalist);
         }
 
         function getRecoveryInputs() {
@@ -394,19 +355,20 @@
         }
 
         function addMessageToChat(message, isSent = true) {
+            const chatMessages = document.getElementById('chat-messages');
             const messageElement = document.createElement('div');
             messageElement.className = `message ${isSent ? 'sent' : 'received'}`;
             messageElement.textContent = message;
-            
+
             const timeElement = document.createElement('div');
             timeElement.className = 'message-time';
-            
+
             const now = new Date();
             timeElement.textContent = `${now.getHours()}:${now.getMinutes().toString().padStart(2, '0')}`;
-            
+
             messageElement.appendChild(timeElement);
             chatMessages.appendChild(messageElement);
-            chatMessages.scrollTop = chatMessages.scrollHeight;
+            chatMessages.scrollTop = chatMessages.scrollHeight; // Scroll to the latest message
         }
 
         function showSearchBar() {
@@ -417,17 +379,236 @@
             document.getElementById('dark-mode-toggle').style.display = 'block';
         }
 
+        function saveContactsToStorage() {
+            localStorage.setItem('cryptext_contacts', JSON.stringify(contacts));
+        }
+
+        function loadContactsFromStorage() {
+            const stored = localStorage.getItem('cryptext_contacts');
+            if (stored) {
+                contacts = JSON.parse(stored);
+            }
+        }
+
+        function getDefaultContacts() {
+            return [
+                { id: "123456", name: "crypText Info" },
+                { id: "789012", name: "Jamal" },
+                { id: "345678", name: "Rahel" }
+            ];
+        }
+
+        // Dummy contacts array for demo (replace with your actual contacts logic)
+        let contacts = [
+            { id: "123456", name: "crypText Info" },
+            { id: "789012", name: "Jamal" },
+            { id: "345678", name: "Rahel" }
+        ];
+
+        function renderContacts() {
+            const contactList = document.querySelector('.contact-list');
+            contactList.innerHTML = '';
+            contacts.forEach(contact => {
+                // crypText Info is undeletable and has no menu
+                if (contact.id === "123456") {
+                    contactList.innerHTML += `
+                        <div class="contact active-contact" data-id="${contact.id}">
+                            <img src="images/crypText.logo.png" alt="CrypText Profile Picture" class="contact-picture">
+                            <div>
+                                <div class="contact-name">${contact.name}</div>
+                                <div class="contact-preview">Basic crypText information</div>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    contactList.innerHTML += `
+                        <div class="contact" data-id="${contact.id}" style="position: relative;">
+                            <img src="images/${contact.name.toLowerCase()}.pfp.${contact.id === "789012" ? "webp" : "jpg"}" alt="${contact.name} Profile Picture" class="contact-picture">
+                            <div style="flex:1">
+                                <div class="contact-name">${contact.name} (@${contact.id})</div>
+                                <div class="contact-preview">No messages with this person yet</div>
+                            </div>
+                            <button class="contact-menu-btn" title="More options">⋮</button>
+                        </div>
+                    `;
+                }
+            });
+            attachContactMenuEvents();
+            attachContactClickEvents(); // <-- Add this line
+        }
+
+        // Group modal logic
+        const addGroupBtn = document.getElementById('add-group-btn');
+        const groupModal = document.getElementById('group-modal');
+        const groupModalContent = document.getElementById('group-modal-content');
+        const groupContactsForm = document.getElementById('group-contacts-form');
+        const createGroupConfirmBtn = document.getElementById('create-group-confirm-btn');
+        const cancelGroupBtn = document.getElementById('cancel-group-btn');
+
+        if (addGroupBtn) {
+            addGroupBtn.addEventListener('click', () => {
+                // Populate contacts as checkboxes
+                groupContactsForm.innerHTML = '';
+                contacts.forEach(contact => {
+                    const label = document.createElement('label');
+                    label.style.display = "block";
+                    label.style.marginBottom = "6px";
+                    label.innerHTML = `<input type="checkbox" value="${contact.id}"> ${contact.name} (@${contact.id})`;
+                    groupContactsForm.appendChild(label);
+                });
+                groupModal.classList.remove('hidden');
+            });
+        }
+        if (cancelGroupBtn) {
+            cancelGroupBtn.addEventListener('click', () => {
+                groupModal.classList.add('hidden');
+            });
+        }
+        if (groupModalContent) {
+            groupModalContent.addEventListener('click', (e) => e.stopPropagation());
+        }
+        if (groupModal) {
+            groupModal.addEventListener('click', function (e) {
+                if (e.target === groupModal) groupModal.classList.add('hidden');
+            });
+        }
+        if (createGroupConfirmBtn) {
+            createGroupConfirmBtn.addEventListener('click', () => {
+                const selected = Array.from(groupContactsForm.querySelectorAll('input[type="checkbox"]:checked')).map(cb => cb.value);
+                alert('Selected contacts for group: ' + selected.join(', '));
+                groupModal.classList.add('hidden');
+            });
+        }
+
+        // Show contacts modal logic with clickable/editable contacts
+        const showContactsBtn = document.getElementById('show-contacts-btn');
+        const contactsModal = document.getElementById('contacts-modal');
+        const contactsModalContent = document.getElementById('contacts-modal-content');
+        const contactsList = document.getElementById('contacts-list');
+        const closeContactsBtn = document.getElementById('close-contacts-btn');
+
+        // Edit contact modal logic
+        const editContactModal = document.getElementById('edit-contact-modal');
+        const editContactModalContent = document.getElementById('edit-contact-modal-content');
+        const editContactName = document.getElementById('edit-contact-name');
+        const editContactId = document.getElementById('edit-contact-id');
+        const saveContactBtn = document.getElementById('save-contact-btn');
+        const deleteContactBtn = document.getElementById('delete-contact-btn');
+        const cancelEditContactBtn = document.getElementById('cancel-edit-contact-btn');
+
+        let editingContactIndex = null;
+
+        if (showContactsBtn) {
+            showContactsBtn.addEventListener('click', () => {
+                contactsList.innerHTML = '';
+                contacts.forEach((contact, idx) => {
+                    const li = document.createElement('li');
+                    li.style.marginBottom = "8px";
+                    li.style.display = "flex";
+                    li.style.alignItems = "center";
+                    li.style.justifyContent = "space-between";
+                    li.style.cursor = "pointer";
+                    li.innerHTML = `
+                        <span>
+                            <strong>${contact.name}</strong> <span style="color:#888;">(@${contact.id})</span>
+                        </span>
+                        <span>
+                            <button class="btn btn-sm edit-contact-btn" data-index="${idx}" style="background:#007bff; color:#fff; font-size:0.9em; padding:2px 8px; border-radius:5px; margin-right:4px;">✎</button>
+                            <button class="btn btn-sm delete-contact-btn" data-index="${idx}" style="background:#dc3545; color:#fff; font-size:0.9em; padding:2px 8px; border-radius:5px;">✖</button>
+                        </span>
+                    `;
+                    // Click on name selects contact (you can add your logic here)
+                    li.querySelector('span').onclick = () => {
+                        alert('Selected contact: ' + contact.name + ' (@' + contact.id + ')');
+                    };
+                    // Edit button
+                    li.querySelector('.edit-contact-btn').onclick = (e) => {
+                        editingContactIndex = idx;
+                        editContactName.value = contact.name;
+                        editContactId.textContent = '@' + contact.id;
+                        editContactModal.classList.remove('hidden');
+                        e.stopPropagation();
+                    };
+                    // Delete button
+                    li.querySelector('.delete-contact-btn').onclick = (e) => {
+                        if (confirm('Are you sure you want to delete this contact?')) {
+                            contacts.splice(idx, 1);
+                            showContactsBtn.click();
+                        }
+                        e.stopPropagation();
+                    };
+                    contactsList.appendChild(li);
+                });
+                contactsModal.classList.remove('hidden');
+            });
+        }
+        if (closeContactsBtn) {
+            closeContactsBtn.addEventListener('click', () => {
+                contactsModal.classList.add('hidden');
+            });
+        }
+        if (contactsModalContent) {
+            contactsModalContent.addEventListener('click', (e) => e.stopPropagation());
+        }
+        if (contactsModal) {
+            contactsModal.addEventListener('click', function (e) {
+                if (e.target === contactsModal) contactsModal.classList.add('hidden');
+            });
+        }
+
+        // Edit contact modal logic
+        if (saveContactBtn) {
+            saveContactBtn.addEventListener('click', () => {
+                if (editingContactIndex !== null) {
+                    // Update the contact's name with the new value
+                    contacts[editingContactIndex].name = editContactName.value || contacts[editingContactIndex].name;
+                    editContactModal.classList.add('hidden');
+                    // Optionally update UI immediately
+                    showContactsBtn.click();
+                }
+            });
+        }
+        if (deleteContactBtn) {
+            deleteContactBtn.addEventListener('click', () => {
+                if (editingContactIndex !== null) {
+                    if (confirm('Are you sure you want to delete this contact?')) {
+                        contacts.splice(editingContactIndex, 1);
+                        editContactModal.classList.add('hidden');
+                        showContactsBtn.click();
+                    }
+                }
+            });
+        }
+        if (cancelEditContactBtn) {
+            cancelEditContactBtn.addEventListener('click', () => {
+                editContactModal.classList.add('hidden');
+            });
+        }
+        if (editContactModalContent) {
+            editContactModalContent.addEventListener('click', (e) => e.stopPropagation());
+        }
+        if (editContactModal) {
+            editContactModal.addEventListener('click', function (e) {
+                if (e.target === editContactModal) editContactModal.classList.add('hidden');
+            });
+        }
+
         // Event Listeners
         createAccountBtn.addEventListener('click', () => {
             const userId = generateUniqueId();
             const recoveryPhrase = generateRecoveryPhrase();
-            
+
             currentUser.id = userId;
             currentUser.recoveryPhrase = recoveryPhrase;
-            
+
             userIdDisplay.textContent = userId;
             displayRecoveryPhrase(recoveryPhrase);
-            
+
+            // Reset contacts for new account
+            contacts = getDefaultContacts();
+            saveContactsToStorage();
+            renderContacts();
+
             showScreen('setup');
         });
 
@@ -461,8 +642,14 @@
                 chatUserIdDisplay.textContent = `@${currentUser.id}`;
                 chatDisplayNameElement.textContent = currentUser.displayName;
                 recoveryErrorAlert.classList.add('hidden');
-                showSearchBar(); // Show the search bar
-                showDarkModeToggle(); // Show the dark mode toggle
+
+                // Reset contacts for recovered account
+                contacts = getDefaultContacts();
+                saveContactsToStorage();
+                renderContacts();
+
+                showSearchBar();
+                showDarkModeToggle();
                 showScreen('chat');
             } else {
                 recoveryErrorAlert.classList.remove('hidden');
@@ -475,14 +662,17 @@
 
         logoutBtn.addEventListener('click', () => {
             localStorage.removeItem('cryptext_user');
+            localStorage.setItem('cryptext_contacts', JSON.stringify(getDefaultContacts())); // Reset contacts
             showScreen('welcome');
         });
 
         sendBtn.addEventListener('click', () => {
+            const messageInput = document.getElementById('message-input');
             const message = messageInput.value.trim();
+
             if (message) {
-                addMessageToChat(message, true);
-                messageInput.value = '';
+                addMessageToChat(message, true); // Add the message to the chat
+                messageInput.value = ''; // Clear the input field
             }
         });
 
@@ -492,18 +682,25 @@
             }
         });
 
-        contactElements.forEach(contact => {
-            contact.addEventListener('click', function() {
-                contactElements.forEach(c => c.classList.remove('active-contact'));
-                this.classList.add('active-contact');
-                const contactName = this.querySelector('.contact-name').textContent;
-                currentChatName.textContent = contactName;
-                chatMessages.innerHTML = '';
-                setTimeout(() => {
-                    addMessageToChat('Hi there! This is a new conversation.', false);
-                }, 300);
+        function attachContactClickEvents() {
+            const contactElements = document.querySelectorAll('.contact');
+            contactElements.forEach(contact => {
+                contact.addEventListener('click', function(e) {
+                    // Prevent switching chat if clicking the ⋮ button
+                    if (e.target.classList.contains('contact-menu-btn')) return;
+                    contactElements.forEach(c => c.classList.remove('active-contact'));
+                    this.classList.add('active-contact');
+                    const contactName = this.querySelector('.contact-name').textContent;
+                    const currentChatName = document.getElementById('current-chat-name');
+                    const chatMessages = document.getElementById('chat-messages');
+                    currentChatName.textContent = contactName;
+                    chatMessages.innerHTML = '';
+                    setTimeout(() => {
+                        addMessageToChat('Hi there! This is a new conversation.', false);
+                    }, 300);
+                });
             });
-        });
+        }
 
         // Check if user is already logged in
         window.addEventListener('DOMContentLoaded', () => {
@@ -515,17 +712,25 @@
         });
 
         // Handle Profile Picture Upload
-        profilePicInput.addEventListener('change', function(event) {
-            const file = event.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    const profilePicture = document.getElementById('profile-picture');
-                    profilePicture.src = e.target.result;
-                    profilePicture.style.display = 'inline-block'; // Show the profile picture
-                };
-                reader.readAsDataURL(file);
-            }
+        profilePicInput.addEventListener('change', function (e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function (event) {
+                const dataUrl = event.target.result;
+                // Save to localStorage
+                localStorage.setItem('profilePicture', dataUrl);
+                // Set the profile picture src
+                document.getElementById('profile-picture').src = dataUrl;
+                document.getElementById('profile-picture').style.display = 'block';
+                // If you have a modal or other places, update them too
+                const modalPic = document.getElementById('modal-profile-picture');
+                if (modalPic) {
+                    modalPic.src = dataUrl;
+                    modalPic.style.display = 'block';
+                }
+            };
+            reader.readAsDataURL(file);
         });
 
         // Search Functionality
@@ -558,3 +763,338 @@
         closeSettingsBtn.addEventListener('click', () => {
             settingsBar.classList.remove('active');
         });
+
+        // Toggle the emoji picker
+        document.getElementById('emoji-btn').addEventListener('click', () => {
+            const emojiPicker = document.getElementById('emoji-picker');
+            const emojiButton = document.getElementById('emoji-btn');
+
+            // Toggle visibility
+            emojiPicker.classList.toggle('hidden');
+
+            if (!emojiPicker.classList.contains('hidden')) {
+                // Get the position of the emoji button
+                const buttonRect = emojiButton.getBoundingClientRect();
+
+                // Position the emoji picker above the button
+                emojiPicker.style.left = `${buttonRect.left}px`;
+                emojiPicker.style.top = `${buttonRect.top - emojiPicker.offsetHeight}px`;
+            }
+        });
+
+        // Handle emoji selection
+        document.getElementById('emoji-picker').addEventListener('click', (event) => {
+            if (event.target.tagName === 'SPAN') {
+                const emoji = event.target.textContent;
+                const messageInput = document.getElementById('message-input');
+
+                // Insert the emoji at the cursor position
+                const cursorPosition = messageInput.selectionStart;
+                const textBeforeCursor = messageInput.value.substring(0, cursorPosition);
+                const textAfterCursor = messageInput.value.substring(cursorPosition);
+                messageInput.value = textBeforeCursor + emoji + textAfterCursor;
+
+                // Refocus the input and set the cursor position
+                messageInput.focus();
+                messageInput.selectionStart = messageInput.selectionEnd = cursorPosition + emoji.length;
+            }
+        });
+
+        // Handle sending messages (including emojis)
+        document.getElementById('send-btn').addEventListener('click', () => {
+            const messageInput = document.getElementById('message-input');
+            const message = messageInput.value.trim();
+
+            if (message) {
+                addMessageToChat(message, true); // Add the message to the chat
+                messageInput.value = ''; // Clear the input field
+            }
+        });
+
+        // Add message to chat
+        function addMessageToChat(message, isSent = true) {
+            const chatMessages = document.getElementById('chat-messages');
+            const messageElement = document.createElement('div');
+            messageElement.className = `message ${isSent ? 'sent' : 'received'}`;
+            messageElement.textContent = message;
+
+            const timeElement = document.createElement('div');
+            timeElement.className = 'message-time';
+
+            const now = new Date();
+            timeElement.textContent = `${now.getHours()}:${now.getMinutes().toString().padStart(2, '0')}`;
+
+            messageElement.appendChild(timeElement);
+            chatMessages.appendChild(messageElement);
+            chatMessages.scrollTop = chatMessages.scrollHeight; // Scroll to the latest message
+        }
+
+        // Copy Recovery Phrase Button
+        document.getElementById('copy-recovery-phrase-btn').addEventListener('click', () => {
+            const recoveryPhraseContainer = document.getElementById('recovery-phrase');
+            const phraseWords = Array.from(recoveryPhraseContainer.querySelectorAll('.phrase-word')).map(word => word.textContent.trim());
+            const recoveryPhrase = phraseWords.join(' ');
+
+            // Copy to clipboard
+            navigator.clipboard.writeText(recoveryPhrase).then(() => {
+                alert('Recovery phrase copied to clipboard');
+            }).catch(err => {
+                console.error('Failed to copy recovery phrase: ', err);
+            });
+        });
+
+        // Show modal
+        document.getElementById('add-user-btn').onclick = function() {
+            document.getElementById('add-user-modal').classList.remove('hidden');
+            document.getElementById('new-user-id').value = '';
+            document.getElementById('add-user-error').textContent = '';
+            document.getElementById('new-user-id').focus();
+        };
+
+        // Hide modal
+        document.getElementById('cancel-add-user-btn').onclick = function() {
+            document.getElementById('add-user-modal').classList.add('hidden');
+        };
+
+        // Confirm add user
+        document.getElementById('confirm-add-user-btn').onclick = function() {
+            const id = document.getElementById('new-user-id').value.trim();
+            const errorDiv = document.getElementById('add-user-error');
+            if (!/^\d{6}$/.test(id)) {
+                errorDiv.textContent = "Please enter a valid 6-digit ID.";
+                return;
+            }
+            errorDiv.textContent = '';
+            // Add user logic here (e.g., add to contact list)
+            alert('User @' + id + ' added!'); // Replace with your logic
+            document.getElementById('add-user-modal').classList.add('hidden');
+        };
+
+        // Optional: Close modal on outside click
+        document.getElementById('add-user-modal').onclick = function(e) {
+            if (e.target === this) this.classList.add('hidden');
+        };
+
+        // Delete Account Modal Logic
+        const deleteAccountBtn = document.getElementById('delete-account-btn');
+        const deleteAccountModal = document.getElementById('delete-account-modal');
+        const confirmDeleteCheckbox = document.getElementById('confirm-delete-checkbox');
+        const deleteMessagesBtn = document.getElementById('delete-messages-btn');
+        const panicDeleteBtn = document.getElementById('panic-delete-account-btn');
+        const cancelDeleteBtn = document.getElementById('cancel-delete-account-btn');
+        const modalContent = document.getElementById('delete-account-modal-content');
+
+        // Show modal only when Delete Account is clicked
+        if (deleteAccountBtn) {
+            deleteAccountBtn.addEventListener('click', () => {
+                deleteAccountModal.classList.remove('hidden');
+                confirmDeleteCheckbox.checked = false;
+                deleteMessagesBtn.disabled = true;
+                panicDeleteBtn.disabled = true;
+            });
+        }
+
+        // Enable buttons only if checkbox is checked
+        if (confirmDeleteCheckbox) {
+            confirmDeleteCheckbox.addEventListener('change', () => {
+                deleteMessagesBtn.disabled = !confirmDeleteCheckbox.checked;
+                panicDeleteBtn.disabled = !confirmDeleteCheckbox.checked;
+            });
+        }
+
+        // Cancel button closes the modal
+        if (cancelDeleteBtn) {
+            cancelDeleteBtn.addEventListener('click', () => {
+                deleteAccountModal.classList.add('hidden');
+            });
+        }
+
+        // Prevent modal from closing when clicking inside the modal content
+        if (modalContent) {
+            modalContent.addEventListener('click', (e) => {
+                e.stopPropagation();
+            });
+        }
+
+        // Clicking outside the modal content closes the modal
+        deleteAccountModal.addEventListener('click', function (e) {
+            if (e.target === deleteAccountModal) {
+                deleteAccountModal.classList.add('hidden');
+            }
+        });
+
+        // Handle Delete All Messages
+        if (deleteMessagesBtn) {
+            deleteMessagesBtn.addEventListener('click', () => {
+                // Add your logic to delete all messages here
+                alert('All your messages have been deleted. Your account is safe.');
+                deleteAccountModal.classList.add('hidden');
+            });
+        }
+
+        // Handle Panic Delete (Account & All Data)
+        if (panicDeleteBtn) {
+            panicDeleteBtn.addEventListener('click', () => {
+                // Add your logic to delete all data and account here
+                localStorage.removeItem('cryptext_user');
+                alert('All your data and account have been permanently deleted.');
+                deleteAccountModal.classList.add('hidden');
+                // Optionally, reload or redirect to welcome screen
+                location.reload();
+            });
+        }
+
+        // Profile modal logic
+        const profileSettingsBtn = document.getElementById('profile-settings-btn');
+        const profileModal = document.getElementById('profile-modal');
+        const profileModalContent = document.getElementById('profile-modal-content');
+        const modalProfilePicture = document.getElementById('modal-profile-picture');
+        const modalProfilePicInput = document.getElementById('modal-profile-pic-input');
+        const modalDisplayName = document.getElementById('modal-display-name');
+        const modalUserId = document.getElementById('modal-user-id');
+        const saveProfileBtn = document.getElementById('save-profile-btn');
+        const cancelProfileBtn = document.getElementById('cancel-profile-btn');
+
+        // Elements on main chat screen
+        const chatDisplayName = document.getElementById('chat-display-name');
+        const chatUserId = document.getElementById('chat-user-id');
+        const profilePicture = document.getElementById('profile-picture');
+
+        // Show modal and fill with current info
+        if (profileSettingsBtn) {
+            profileSettingsBtn.addEventListener('click', () => {
+                // Set current values
+                modalDisplayName.value = chatDisplayName.textContent;
+                modalUserId.textContent = chatUserId.textContent;
+                if (profilePicture.src && profilePicture.style.display !== "none") {
+                    modalProfilePicture.src = profilePicture.src;
+                    modalProfilePicture.style.display = "block";
+                } else {
+                    modalProfilePicture.style.display = "none";
+                }
+                profileModal.classList.remove('hidden');
+            });
+        }
+
+        // Save changes
+        if (saveProfileBtn) {
+            saveProfileBtn.addEventListener('click', () => {
+                chatDisplayName.textContent = modalDisplayName.value || "Anonymous User";
+                // Update profile picture if a new one is selected
+                if (modalProfilePicInput.files && modalProfilePicInput.files[0]) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        profilePicture.src = e.target.result;
+                        profilePicture.style.display = "block";
+                    };
+                    reader.readAsDataURL(modalProfilePicInput.files[0]);
+                }
+                profileModal.classList.add('hidden');
+            });
+        }
+
+        // Cancel button closes the modal
+        if (cancelProfileBtn) {
+            cancelProfileBtn.addEventListener('click', () => {
+                profileModal.classList.add('hidden');
+            });
+        }
+
+        // Prevent modal from closing when clicking inside the modal content
+        if (profileModalContent) {
+            profileModalContent.addEventListener('click', (e) => {
+                e.stopPropagation();
+            });
+        }
+
+        // Clicking outside the modal content closes the modal
+        if (profileModal) {
+            profileModal.addEventListener('click', function (e) {
+                if (e.target === profileModal) {
+                    profileModal.classList.add('hidden');
+                }
+            });
+        }
+
+        window.addEventListener('DOMContentLoaded', function () {
+            const dataUrl = localStorage.getItem('profilePicture');
+            if (dataUrl) {
+                const profilePic = document.getElementById('profile-picture');
+                profilePic.src = dataUrl;
+                profilePic.style.display = 'block';
+                // Also update modal if present
+                const modalPic = document.getElementById('modal-profile-picture');
+                if (modalPic) {
+                    modalPic.src = dataUrl;
+                    modalPic.style.display = 'block';
+                }
+            }
+        });
+
+        window.addEventListener('DOMContentLoaded', function () {
+            loadContactsFromStorage();
+            renderContacts();
+            attachContactMenuEvents();
+            attachContactClickEvents();
+            // ...rest of your DOMContentLoaded logic...
+        });
+
+        function attachContactMenuEvents() {
+            const contextMenu = document.getElementById('contact-context-menu');
+            let contextTarget = null;
+
+            // Remove any previous listeners to avoid stacking
+            document.removeEventListener('mousedown', handleOutsideClick);
+
+            document.querySelectorAll('.contact-menu-btn').forEach(btn => {
+                btn.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                    contextTarget = btn.closest('.contact');
+                    // Position menu
+                    const rect = btn.getBoundingClientRect();
+                    contextMenu.style.top = `${rect.bottom + window.scrollY}px`;
+                    contextMenu.style.left = `${rect.right - contextMenu.offsetWidth}px`;
+                    contextMenu.classList.remove('hidden');
+
+                    // Add listener to close menu when clicking outside
+                    setTimeout(() => {
+                        document.addEventListener('mousedown', handleOutsideClick);
+                    }, 0);
+                });
+            });
+
+            // Prevent menu from closing when clicking inside it
+            contextMenu.onclick = e => e.stopPropagation();
+
+            function handleOutsideClick(e) {
+                if (!contextMenu.contains(e.target)) {
+                    contextMenu.classList.add('hidden');
+                    contextTarget = null;
+                    document.removeEventListener('mousedown', handleOutsideClick);
+                }
+            }
+
+            // Clear Chat
+            document.getElementById('clear-chat-btn').onclick = function (e) {
+                e.stopPropagation();
+                // Implement your clear chat logic here
+                alert('All messages for this chat have been cleared.');
+                contextMenu.classList.add('hidden');
+                contextTarget = null;
+                document.removeEventListener('mousedown', handleOutsideClick);
+            };
+
+            // Delete Chat
+            document.getElementById('delete-chat-btn').onclick = function (e) {
+                e.stopPropagation();
+                if (contextTarget) {
+                    const contactId = contextTarget.getAttribute('data-id');
+                    contacts = contacts.filter(c => c.id !== contactId);
+                    saveContactsToStorage();
+                    renderContacts();
+                    contextMenu.classList.add('hidden');
+                    contextTarget = null;
+                    document.removeEventListener('mousedown', handleOutsideClick);
+                }
+            };
+        }
